@@ -2,8 +2,10 @@
 
 import Link from 'next/link';
 import { ProjectWithCounts } from '@/lib/types';
+import { useI18n } from '@/lib/i18n';
 
 export default function ProjectCard({ project }: { project: ProjectWithCounts }) {
+  const { t } = useI18n();
   return (
     <Link href={`/projects/${project.name}`}>
       <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg overflow-hidden hover:border-[var(--text-muted)] transition-colors cursor-pointer group">
@@ -38,16 +40,16 @@ export default function ProjectCard({ project }: { project: ProjectWithCounts })
             {project.pending_count > 0 && (
               <span className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-gray-400" />
-                {project.pending_count} pendiente{project.pending_count !== 1 ? 's' : ''}
+                {project.pending_count} {project.pending_count !== 1 ? t('project.pendingPlural') : t('project.pending')}
               </span>
             )}
             {project.in_progress_count > 0 && (
               <span className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-blue-400" />
-                {project.in_progress_count} en progreso
+                {project.in_progress_count} {t('project.inProgress')}
               </span>
             )}
-            <span className="text-[var(--text-muted)]">{project.total_count} total</span>
+            <span className="text-[var(--text-muted)]">{project.total_count} {t('project.total')}</span>
           </div>
         </div>
       </div>

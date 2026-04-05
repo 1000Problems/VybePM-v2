@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, FormEvent } from 'react';
 import { Task } from '@/lib/types';
+import { useI18n } from '@/lib/i18n';
 
 interface VideoRequest {
   id: number | string; // string for optimistic (temp) IDs
@@ -12,6 +13,7 @@ interface VideoRequest {
 }
 
 export default function VideoCommandBar() {
+  const { t } = useI18n();
   const [prompt, setPrompt] = useState('');
   const [requests, setRequests] = useState<VideoRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -97,14 +99,14 @@ export default function VideoCommandBar() {
         return (
           <span className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] shrink-0">
             <span className="w-2 h-2 rounded-full bg-gray-500" />
-            En cola
+            {t('video.queued')}
           </span>
         );
       case 'in_progress':
         return (
           <span className="flex items-center gap-1.5 text-xs text-blue-400 shrink-0">
             <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-            Procesando...
+            {t('video.processing')}
           </span>
         );
       case 'done':
@@ -118,10 +120,10 @@ export default function VideoCommandBar() {
             </svg>
             {req.attachmentUrl ? (
               <a href={req.attachmentUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                Ver video
+                {t('video.view')}
               </a>
             ) : (
-              'Ver video'
+              t('video.view')
             )}
           </span>
         );
@@ -133,7 +135,7 @@ export default function VideoCommandBar() {
   return (
     <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg p-4 mb-6">
       <h2 className="text-sm font-medium text-[var(--text-secondary)] uppercase tracking-wide mb-3">
-        Solicitudes de Video
+        {t('video.title')}
       </h2>
 
       {/* Input */}
@@ -142,7 +144,7 @@ export default function VideoCommandBar() {
           type="text"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Describe un video..."
+          placeholder={t('video.placeholder')}
           className="flex-1 bg-[var(--bg-primary)] border border-[var(--border)] rounded-md px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:border-[#e040fb] transition-colors"
         />
         <button
@@ -150,13 +152,13 @@ export default function VideoCommandBar() {
           disabled={!prompt.trim() || sending}
           className="px-4 py-2 bg-[#e040fb] text-white text-sm font-medium rounded-md hover:bg-[#c030db] disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
         >
-          Enviar
+          {t('video.submit')}
         </button>
       </form>
 
       {/* Feed */}
       {loading ? (
-        <p className="text-xs text-[var(--text-muted)]">Cargando...</p>
+        <p className="text-xs text-[var(--text-muted)]">{t('loading')}</p>
       ) : requests.length > 0 ? (
         <div className="space-y-1">
           {requests.map((req) => (

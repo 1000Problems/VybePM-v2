@@ -2,8 +2,10 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { useI18n } from '@/lib/i18n';
 
 export default function LoginPage() {
+  const { t } = useI18n();
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -25,10 +27,10 @@ export default function LoginPage() {
         router.push('/');
       } else {
         const data = await res.json();
-        setError(data.error === 'Invalid password' ? 'Contraseña incorrecta' : (data.error || 'Error al iniciar sesión'));
+        setError(data.error === 'Invalid password' ? t('auth.wrongPassword') : (data.error || t('auth.loginError')));
       }
     } catch {
-      setError('Error de red');
+      setError(t('auth.networkError'));
     } finally {
       setLoading(false);
     }
@@ -45,7 +47,7 @@ export default function LoginPage() {
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Contraseña"
+          placeholder={t('auth.password')}
           autoFocus
           className="w-full px-3 py-2 bg-[var(--bg-primary)] border border-[var(--border)] rounded text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-blue)] mb-4"
         />
@@ -57,7 +59,7 @@ export default function LoginPage() {
           disabled={loading}
           className="w-full py-2 bg-[var(--accent-green)] text-white rounded font-medium hover:bg-[var(--accent-green-hover)] disabled:opacity-50 transition-colors"
         >
-          {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
+          {loading ? t('auth.loggingIn') : t('auth.login')}
         </button>
       </form>
     </div>

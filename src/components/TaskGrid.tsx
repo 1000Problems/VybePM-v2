@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Task, TaskStatus, TaskType, Assignee, VALID_TASK_TYPES, VALID_STATUSES, VALID_ASSIGNEES, STATUS_TRANSITIONS, STATUS_LABELS, TASK_TYPE_LABELS, ASSIGNEE_LABELS, PRIORITY_LABELS } from '@/lib/types';
+import { Task, TaskStatus, TaskType, Assignee, VALID_TASK_TYPES, VALID_STATUSES, VALID_ASSIGNEES, STATUS_TRANSITIONS, STATUS_LABEL_KEYS, TASK_TYPE_LABEL_KEYS, ASSIGNEE_LABEL_KEYS, PRIORITY_LABEL_KEYS } from '@/lib/types';
+import { useI18n, TranslationKey } from '@/lib/i18n';
 import StatusBadge from './StatusBadge';
 import TaskDetail from './TaskDetail';
 
@@ -19,6 +20,7 @@ interface TaskGridProps {
 }
 
 export default function TaskGrid({ projectSlug, tasks, onTasksChange }: TaskGridProps) {
+  const { t, locale } = useI18n();
   const [expandedTaskId, setExpandedTaskId] = useState<number | null>(null);
   const [editingCell, setEditingCell] = useState<{ taskId: number; field: string } | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -84,9 +86,9 @@ export default function TaskGrid({ projectSlug, tasks, onTasksChange }: TaskGrid
   };
 
   const getLabel = (field: string, value: string): string => {
-    if (field === 'status') return STATUS_LABELS[value as TaskStatus] || value;
-    if (field === 'task_type') return TASK_TYPE_LABELS[value as TaskType] || value;
-    if (field === 'assignee') return ASSIGNEE_LABELS[value as Assignee] || value;
+    if (field === 'status') return t(STATUS_LABEL_KEYS[value as TaskStatus] as TranslationKey);
+    if (field === 'task_type') return t(TASK_TYPE_LABEL_KEYS[value as TaskType] as TranslationKey);
+    if (field === 'assignee') return t(ASSIGNEE_LABEL_KEYS[value as Assignee] as TranslationKey);
     return value;
   };
 
@@ -116,16 +118,16 @@ export default function TaskGrid({ projectSlug, tasks, onTasksChange }: TaskGrid
   const renderTaskRow = (task: Task, isDone: boolean) => (
     <div key={task.id}>
       <div
-        className={`group/row grid grid-cols-[28px_1fr_90px_100px_90px_80px_32px] gap-2 items-center px-3 py-2 border-b border-[var(--border)] hover:bg-[var(--bg-secondary)] text-sm cursor-pointer ${isDone ? 'opacity-50' : ''}`}
+        className={`group/row grid grid-cols-[28px_1fr_90px_100px_90px_80px_32px] gap-2 items-start px-3 py-2 border-b border-[var(--border)] hover:bg-[var(--bg-secondary)] text-sm cursor-pointer ${isDone ? 'opacity-50' : ''}`}
         onClick={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
       >
         {/* Priority dot */}
-        <div className="flex justify-center">
-          <span className={`w-2.5 h-2.5 rounded-full ${PRIORITY_COLORS[task.priority]}`} title={PRIORITY_LABELS[task.priority]} />
+        <div className="flex justify-center pt-1">
+          <span className={`w-2.5 h-2.5 rounded-full ${PRIORITY_COLORS[task.priority]}`} title={t(PRIORITY_LABEL_KEYS[task.priority] as TranslationKey)} />
         </div>
 
         {/* Title */}
-        <div onClick={(e) => e.stopPropagation()}>
+        <div className="min-w-0" onClick={(e) => e.stopPropagation()}>
           {editingCell?.taskId === task.id && editingCell.field === 'title' ? (
             <input
               autoFocus
@@ -137,7 +139,8 @@ export default function TaskGrid({ projectSlug, tasks, onTasksChange }: TaskGrid
             />
           ) : (
             <span
-              className="text-[var(--text-primary)] hover:text-white truncate block"
+              className="text-[var(--text-primary)] line-clamp-2 break-words block"
+              title={task.title}
               onDoubleClick={() => startEdit(task.id, 'title', task.title)}
             >
               {task.title}
@@ -166,7 +169,7 @@ export default function TaskGrid({ projectSlug, tasks, onTasksChange }: TaskGrid
 
         {/* Updated */}
         <div className="text-[var(--text-muted)] text-xs">
-          {new Date(task.updated_at).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}
+          {new Date(task.updated_at).toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US', { month: 'short', day: 'numeric' })}
         </div>
 
         {/* Delete (pending only) */}
@@ -175,7 +178,7 @@ export default function TaskGrid({ projectSlug, tasks, onTasksChange }: TaskGrid
             <button
               onClick={() => deleteTask(task.id)}
               className="opacity-0 group-hover/row:opacity-100 text-[var(--text-muted)] hover:text-red-400 transition-opacity"
-              title="Eliminar"
+              title={t('task.delete')}
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -197,26 +200,26 @@ export default function TaskGrid({ projectSlug, tasks, onTasksChange }: TaskGrid
     <div key={task.id} className={`bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg p-3 ${isDone ? 'opacity-50' : ''}`}>
       <div className="flex items-start gap-2 mb-2">
         <span className={`w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${PRIORITY_COLORS[task.priority]}`} />
-        <span className="text-[var(--text-primary)] text-sm font-medium flex-1">{task.title}</span>
+        <span className="text-[var(--text-primary)] text-sm font-medium flex-1 min-w-0 line-clamp-3 break-words">{task.title}</span>
       </div>
       <div className="flex items-center gap-2 flex-wrap">
         <StatusBadge status={task.status} />
-        <span className="text-[var(--text-secondary)] text-xs">{TASK_TYPE_LABELS[task.task_type]}</span>
-        <span className="text-[var(--text-muted)] text-xs ml-auto">{ASSIGNEE_LABELS[task.assignee]}</span>
+        <span className="text-[var(--text-secondary)] text-xs">{t(TASK_TYPE_LABEL_KEYS[task.task_type] as TranslationKey)}</span>
+        <span className="text-[var(--text-muted)] text-xs ml-auto">{t(ASSIGNEE_LABEL_KEYS[task.assignee] as TranslationKey)}</span>
       </div>
       <div className="flex items-center gap-3 mt-2">
         <button
           onClick={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
           className="text-xs text-[var(--accent-blue)] hover:underline"
         >
-          {expandedTaskId === task.id ? 'Cerrar' : 'Detalles'}
+          {expandedTaskId === task.id ? t('task.close') : t('task.details')}
         </button>
         {task.status === 'pending' && (
           <button
             onClick={() => deleteTask(task.id)}
             className="text-xs text-[var(--text-muted)] hover:text-red-400 ml-auto"
           >
-            Eliminar
+            {t('task.delete')}
           </button>
         )}
       </div>
@@ -231,11 +234,11 @@ export default function TaskGrid({ projectSlug, tasks, onTasksChange }: TaskGrid
       {/* Desktop table header */}
       <div className="hidden md:grid grid-cols-[28px_1fr_90px_100px_90px_80px_32px] gap-2 px-3 py-2 text-xs text-[var(--text-secondary)] border-b border-[var(--border)] uppercase tracking-wide font-medium">
         <div />
-        <div>Título</div>
-        <div>Tipo</div>
-        <div>Estado</div>
-        <div>Asignado</div>
-        <div>Actualizado</div>
+        <div>{t('task.title')}</div>
+        <div>{t('task.type')}</div>
+        <div>{t('task.status')}</div>
+        <div>{t('task.assignee')}</div>
+        <div>{t('task.updated')}</div>
         <div />
       </div>
 
@@ -251,7 +254,7 @@ export default function TaskGrid({ projectSlug, tasks, onTasksChange }: TaskGrid
             value={newTaskTitle}
             onChange={(e) => setNewTaskTitle(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); createTask(); } }}
-            placeholder="Nueva tarea..."
+            placeholder={t('task.new')}
             rows={3}
             className="w-full bg-transparent text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm outline-none resize-none overflow-hidden"
           />
@@ -260,7 +263,7 @@ export default function TaskGrid({ projectSlug, tasks, onTasksChange }: TaskGrid
           <div />
           {newTaskTitle.trim() && (
             <button onClick={createTask} disabled={creating} className="text-xs text-[var(--accent-blue)] hover:underline pt-1.5">
-              {creating ? '...' : 'Agregar'}
+              {creating ? '...' : t('task.add')}
             </button>
           )}
         </div>
@@ -275,7 +278,7 @@ export default function TaskGrid({ projectSlug, tasks, onTasksChange }: TaskGrid
               <span className="transition-transform" style={{ transform: showCompleted ? 'rotate(90deg)' : 'rotate(0)' }}>
                 &#9654;
               </span>
-              Completados ({completedTasks.length})
+              {t('task.completed')} ({completedTasks.length})
             </button>
             {showCompleted && completedTasks.map((t) => renderTaskRow(t, true))}
           </div>
@@ -293,13 +296,13 @@ export default function TaskGrid({ projectSlug, tasks, onTasksChange }: TaskGrid
             value={newTaskTitle}
             onChange={(e) => setNewTaskTitle(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); createTask(); } }}
-            placeholder="Nueva tarea..."
+            placeholder={t('task.new')}
             rows={3}
             className="w-full bg-transparent text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm outline-none resize-none overflow-hidden"
           />
           {newTaskTitle.trim() && (
             <button onClick={createTask} disabled={creating} className="mt-2 text-xs text-[var(--accent-blue)] hover:underline">
-              {creating ? 'Agregando...' : 'Agregar tarea'}
+              {creating ? t('task.adding') : t('task.addTask')}
             </button>
           )}
         </div>
@@ -311,7 +314,7 @@ export default function TaskGrid({ projectSlug, tasks, onTasksChange }: TaskGrid
               className="flex items-center gap-2 py-2 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             >
               <span style={{ transform: showCompleted ? 'rotate(90deg)' : 'rotate(0)' }}>&#9654;</span>
-              Completados ({completedTasks.length})
+              {t('task.completed')} ({completedTasks.length})
             </button>
             {showCompleted && (
               <div className="space-y-2">

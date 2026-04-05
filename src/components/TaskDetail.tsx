@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Task, VALID_TASK_TYPES, VALID_STATUSES, VALID_ASSIGNEES, STATUS_TRANSITIONS, TaskStatus, TaskType, Assignee, STATUS_LABELS, TASK_TYPE_LABELS, ASSIGNEE_LABELS, PRIORITY_LABELS } from '@/lib/types';
+import { Task, VALID_TASK_TYPES, VALID_ASSIGNEES, STATUS_TRANSITIONS, TaskStatus, TaskType, Assignee, STATUS_LABEL_KEYS, TASK_TYPE_LABEL_KEYS, ASSIGNEE_LABEL_KEYS, PRIORITY_LABEL_KEYS } from '@/lib/types';
+import { useI18n, TranslationKey } from '@/lib/i18n';
 import StatusBadge from './StatusBadge';
 
 interface TaskDetailProps {
@@ -11,11 +12,14 @@ interface TaskDetailProps {
 }
 
 export default function TaskDetail({ task, onUpdate, onClose }: TaskDetailProps) {
+  const { t, locale } = useI18n();
   const [editingTitle, setEditingTitle] = useState(false);
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || '');
   const [editingDesc, setEditingDesc] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  const dateFmt = locale === 'es' ? 'es-ES' : 'en-US';
 
   const updateField = async (updates: Record<string, unknown>) => {
     const res = await fetch(`/api/tasks/${task.id}`, {
@@ -34,7 +38,7 @@ export default function TaskDetail({ task, onUpdate, onClose }: TaskDetailProps)
       onUpdate();
     } else {
       const data = await res.json();
-      alert(data.error || 'Error al eliminar');
+      alert(data.error || t('task.deleteError'));
     }
     setDeleting(false);
   };
@@ -67,7 +71,7 @@ export default function TaskDetail({ task, onUpdate, onClose }: TaskDetailProps)
       {/* Metadata row */}
       <div className="flex flex-wrap gap-4 mb-4 text-sm">
         <div>
-          <span className="text-[var(--text-secondary)] mr-2">Estado:</span>
+          <span className="text-[var(--text-secondary)] mr-2">{t('task.status')}:</span>
           <StatusBadge status={task.status} />
           {allowedStatuses.length > 0 && (
             <select
@@ -75,51 +79,51 @@ export default function TaskDetail({ task, onUpdate, onClose }: TaskDetailProps)
               className="ml-2 bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs border border-[var(--border)] rounded px-1 py-0.5"
               defaultValue=""
             >
-              <option value="" disabled>Mover a...</option>
+              <option value="" disabled>{t('task.moveTo')}</option>
               {allowedStatuses.map((s) => (
-                <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+                <option key={s} value={s}>{t(STATUS_LABEL_KEYS[s] as TranslationKey)}</option>
               ))}
             </select>
           )}
         </div>
 
         <div>
-          <span className="text-[var(--text-secondary)] mr-2">Tipo:</span>
+          <span className="text-[var(--text-secondary)] mr-2">{t('task.type')}:</span>
           <select
             value={task.task_type}
             onChange={(e) => updateField({ task_type: e.target.value as TaskType })}
             className="bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs border border-[var(--border)] rounded px-1 py-0.5"
           >
-            {VALID_TASK_TYPES.map((t) => <option key={t} value={t}>{TASK_TYPE_LABELS[t]}</option>)}
+            {VALID_TASK_TYPES.map((tp) => <option key={tp} value={tp}>{t(TASK_TYPE_LABEL_KEYS[tp] as TranslationKey)}</option>)}
           </select>
         </div>
 
         <div>
-          <span className="text-[var(--text-secondary)] mr-2">Prioridad:</span>
+          <span className="text-[var(--text-secondary)] mr-2">{t('task.priority')}:</span>
           <select
             value={task.priority}
             onChange={(e) => updateField({ priority: Number(e.target.value) })}
             className="bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs border border-[var(--border)] rounded px-1 py-0.5"
           >
-            {[1, 2, 3, 4].map((p) => <option key={p} value={p}>{PRIORITY_LABELS[p]}</option>)}
+            {[1, 2, 3, 4].map((p) => <option key={p} value={p}>{t(PRIORITY_LABEL_KEYS[p] as TranslationKey)}</option>)}
           </select>
         </div>
 
         <div>
-          <span className="text-[var(--text-secondary)] mr-2">Asignado:</span>
+          <span className="text-[var(--text-secondary)] mr-2">{t('task.assignee')}:</span>
           <select
             value={task.assignee}
             onChange={(e) => updateField({ assignee: e.target.value as Assignee })}
             className="bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs border border-[var(--border)] rounded px-1 py-0.5"
           >
-            {VALID_ASSIGNEES.map((a) => <option key={a} value={a}>{ASSIGNEE_LABELS[a]}</option>)}
+            {VALID_ASSIGNEES.map((a) => <option key={a} value={a}>{t(ASSIGNEE_LABEL_KEYS[a] as TranslationKey)}</option>)}
           </select>
         </div>
       </div>
 
       {/* Description */}
       <div className="mb-4">
-        <span className="text-[var(--text-secondary)] text-xs uppercase tracking-wide">Descripción</span>
+        <span className="text-[var(--text-secondary)] text-xs uppercase tracking-wide">{t('task.description')}</span>
         {editingDesc ? (
           <textarea
             autoFocus
@@ -134,22 +138,22 @@ export default function TaskDetail({ task, onUpdate, onClose }: TaskDetailProps)
             className="mt-1 text-sm text-[var(--text-secondary)] cursor-pointer hover:text-[var(--text-primary)] min-h-[2rem]"
             onClick={() => setEditingDesc(true)}
           >
-            {task.description || 'Clic para agregar descripción...'}
+            {task.description || t('task.descPlaceholder')}
           </p>
         )}
       </div>
 
       {/* Timestamps */}
       <div className="flex flex-wrap gap-4 text-xs text-[var(--text-muted)] mb-4">
-        <span>Creado: {new Date(task.created_at).toLocaleString('es-ES')}</span>
-        {task.started_at && <span>Iniciado: {new Date(task.started_at).toLocaleString('es-ES')}</span>}
-        {task.completed_at && <span>Completado: {new Date(task.completed_at).toLocaleString('es-ES')}</span>}
+        <span>{t('task.created')}: {new Date(task.created_at).toLocaleString(dateFmt)}</span>
+        {task.started_at && <span>{t('task.started')}: {new Date(task.started_at).toLocaleString(dateFmt)}</span>}
+        {task.completed_at && <span>{t('task.completed')}: {new Date(task.completed_at).toLocaleString(dateFmt)}</span>}
       </div>
 
       {/* Actions */}
       <div className="flex gap-2">
         <button onClick={onClose} className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
-          Cerrar
+          {t('task.close')}
         </button>
         {task.status === 'pending' && (
           <button
@@ -157,7 +161,7 @@ export default function TaskDetail({ task, onUpdate, onClose }: TaskDetailProps)
             disabled={deleting}
             className="text-xs text-red-400 hover:text-red-300 ml-auto"
           >
-            {deleting ? 'Eliminando...' : 'Eliminar'}
+            {deleting ? t('task.deleting') : t('task.delete')}
           </button>
         )}
       </div>

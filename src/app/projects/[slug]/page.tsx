@@ -3,10 +3,12 @@
 import { useEffect, useState, useCallback, use } from 'react';
 import Link from 'next/link';
 import { Project, Task } from '@/lib/types';
+import { useI18n } from '@/lib/i18n';
 import TaskGrid from '@/components/TaskGrid';
 
 export default function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
+  const { t } = useI18n();
   const [project, setProject] = useState<Project | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,11 +31,11 @@ export default function ProjectPage({ params }: { params: Promise<{ slug: string
   }, [fetchData]);
 
   if (loading) {
-    return <div className="min-h-screen bg-[var(--bg-primary)] p-6 text-[var(--text-secondary)]">Cargando...</div>;
+    return <div className="min-h-screen bg-[var(--bg-primary)] p-6 text-[var(--text-secondary)]">{t('loading')}</div>;
   }
 
   if (!project) {
-    return <div className="min-h-screen bg-[var(--bg-primary)] p-6 text-[var(--text-secondary)]">Proyecto no encontrado</div>;
+    return <div className="min-h-screen bg-[var(--bg-primary)] p-6 text-[var(--text-secondary)]">{t('project.notFound')}</div>;
   }
 
   return (
@@ -42,7 +44,7 @@ export default function ProjectPage({ params }: { params: Promise<{ slug: string
       <div className="border-b border-[var(--border)] px-6 py-4">
         <div className="max-w-6xl mx-auto">
           <Link href="/" className="text-xs text-[var(--accent-blue)] hover:underline mb-2 inline-block">
-            &larr; Volver a proyectos
+            &larr; {t('nav.back')}
           </Link>
 
           <div className="flex items-center gap-3">

@@ -58,37 +58,37 @@ export const VALID_TASK_TYPES: TaskType[] = ['dev', 'design', 'animation', 'cont
 export const VALID_STATUSES: TaskStatus[] = ['pending', 'in_progress', 'review', 'checked_in', 'deployed', 'done'];
 export const VALID_ASSIGNEES: Assignee[] = ['angel', 'cowork', 'claude-code'];
 
-// Spanish display labels
-export const STATUS_LABELS: Record<TaskStatus, string> = {
-  pending: 'Pendiente',
-  in_progress: 'En Progreso',
-  review: 'Revisión',
-  checked_in: 'Registrado',
-  deployed: 'Desplegado',
-  done: 'Completado',
+// Translation key maps — use with t() from i18n
+export const STATUS_LABEL_KEYS: Record<TaskStatus, string> = {
+  pending: 'status.pending',
+  in_progress: 'status.in_progress',
+  review: 'status.review',
+  checked_in: 'status.checked_in',
+  deployed: 'status.deployed',
+  done: 'status.done',
 };
 
-export const TASK_TYPE_LABELS: Record<TaskType, string> = {
-  dev: 'Desarrollo',
-  design: 'Diseño',
-  animation: 'Animación',
-  content: 'Contenido',
-  deploy: 'Despliegue',
-  report: 'Reporte',
-  other: 'Otro',
+export const TASK_TYPE_LABEL_KEYS: Record<TaskType, string> = {
+  dev: 'type.dev',
+  design: 'type.design',
+  animation: 'type.animation',
+  content: 'type.content',
+  deploy: 'type.deploy',
+  report: 'type.report',
+  other: 'type.other',
 };
 
-export const ASSIGNEE_LABELS: Record<Assignee, string> = {
-  angel: 'Angel',
-  cowork: 'Cowork',
-  'claude-code': 'Claude Code',
+export const ASSIGNEE_LABEL_KEYS: Record<Assignee, string> = {
+  angel: 'assignee.angel',
+  cowork: 'assignee.cowork',
+  'claude-code': 'assignee.claude-code',
 };
 
-export const PRIORITY_LABELS: Record<number, string> = {
-  1: 'Crítica',
-  2: 'Alta',
-  3: 'Media',
-  4: 'Baja',
+export const PRIORITY_LABEL_KEYS: Record<number, string> = {
+  1: 'priority.1',
+  2: 'priority.2',
+  3: 'priority.3',
+  4: 'priority.4',
 };
 
 // State machine: maps current status to allowed next statuses
