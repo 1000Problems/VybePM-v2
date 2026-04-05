@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { Project, Task } from '@/lib/types';
 import { useI18n } from '@/lib/i18n';
 import TaskGrid from '@/components/TaskGrid';
+import ThemeToggle from '@/components/ThemeToggle';
+import LanguageToggle from '@/components/LanguageToggle';
 
 export default function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -43,9 +45,15 @@ export default function ProjectPage({ params }: { params: Promise<{ slug: string
       {/* Header */}
       <div className="border-b border-[var(--border)] px-6 py-4">
         <div className="max-w-6xl mx-auto">
-          <Link href="/" className="text-xs text-[var(--accent-blue)] hover:underline mb-2 inline-block">
-            &larr; {t('nav.back')}
-          </Link>
+          <div className="flex items-center justify-between mb-2">
+            <Link href="/" className="text-xs text-[var(--accent-blue)] hover:underline">
+              &larr; {t('nav.back')}
+            </Link>
+            <div className="flex items-center gap-2">
+              <LanguageToggle />
+              <ThemeToggle />
+            </div>
+          </div>
 
           <div className="flex items-center gap-3">
             <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: project.color || 'var(--border)' }} />
