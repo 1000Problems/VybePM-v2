@@ -2,15 +2,18 @@
 
 You are building VybePM, the task orchestration hub for 1000Problems. Read SPEC.md first — it is the source of truth for architecture, data model, API, and UI.
 
-## Step 0: Repository Setup
+## Git Rules
 
-This repo (`1000Problems/Vybe`) has an old SwiftUI scaffold that needs to be replaced.
+DO NOT commit or push. Build and test only. Angel reviews the work and handles git himself.
 
-1. Delete everything in the repo except `.git/`, `SPEC.md`, and `CLAUDE.md`
-2. Initialize a new Next.js 15 project with TypeScript and App Router
-3. Create `.gitignore` (Node + Next.js defaults, include `.env*.local`)
-4. Commit: "Replace SwiftUI scaffold with Next.js project for VybePM"
-5. Push to main
+Git author email MUST be angelsbadillos@gmail.com on every commit (when Angel commits). Vercel Hobby plan enforces this.
+
+## Step 0: Scaffold Next.js Project
+
+This is a fresh repo. Initialize the project here:
+
+1. Run `npx create-next-app@latest . --typescript --tailwind --eslint --app --import-alias "@/*" --use-npm` (note the `.` — scaffold into current directory)
+2. Verify it builds: `npm run build`
 
 ## Step 1: Database & Auth (Phase 1 from SPEC.md)
 
@@ -18,7 +21,7 @@ This repo (`1000Problems/Vybe`) has an old SwiftUI scaffold that needs to be rep
 2. Create `src/lib/db.ts` — Neon connection helper with parameterized query wrapper
 3. Create `src/lib/auth.ts` — password cookie validation + API key validation middleware. Password check sets HTTP-only cookie for 30 days. API key check via `X-API-Key` header. Either one grants access.
 4. Create `src/lib/types.ts` — TypeScript interfaces for Project, Task, Attachment
-5. Create `migrations/001_init.sql` with the full schema from SPEC.md. **Important:** prefix all tables with `vybepm_` to avoid conflicts on the shared Neon instance (e.g., `vybepm_projects`, `vybepm_tasks`, `vybepm_attachments`)
+5. Create `migrations/001_init.sql` with the full schema from SPEC.md. **Important:** all tables already prefixed with `vybepm_` in the spec — use those exact names.
 6. Create login page at `/login` — single password input, POST to `/api/auth/login`, redirect to `/` on success
 7. Add middleware that checks for valid session cookie or API key on all routes except `/login` and `/api/auth/login`
 
@@ -35,18 +38,18 @@ This repo (`1000Problems/Vybe`) has an old SwiftUI scaffold that needs to be rep
    - PATCH /api/tasks/[id] (update — enforce state machine transitions)
    - DELETE /api/tasks/[id] (hard delete for pending only, reject otherwise)
    - PATCH /api/tasks/[id]/reorder (update sort_order)
-3. Seed data: create entries for all 6 projects with correct details:
+3. Seed data: create a seed script with entries for all 6 projects:
    - ytcombinator: "YouTube keyword research dashboard", ["Next.js", "TypeScript", "Neon"], "1000Problems/ytcombinator", color "#58a6ff"
    - KitchenInventory: "AI-powered kitchen inventory with voice input", ["Swift", "SwiftUI", "SwiftData"], "1000Problems/KitchenInventory", color "#3fb950"
    - voiceq-api: "Voice-activated task queue API", ["Next.js", "TypeScript", "Neon"], "1000Problems/voiceq-api", color "#d29922"
    - GitMCP: "Local MCP server for native git access", ["Node.js", "TypeScript", "MCP"], "1000Problems/GitMCP", color "#f0883e"
-   - VybePM: "Task orchestration hub", ["Next.js", "TypeScript", "Neon"], "1000Problems/Vybe", color "#a371f7"
+   - VybePM: "Task orchestration hub", ["Next.js", "TypeScript", "Neon"], "1000Problems/VybePM-v2", color "#a371f7"
    - RubberJoints-iOS: "RubberJoints iOS client", ["Swift", "iOS"], "1000Problems/RubberJoints-iOS", color "#f85149"
 4. Test every endpoint
 
 ## Step 3: UI (Phase 1 continued)
 
-1. Install Tailwind CSS 4
+1. Tailwind is already installed from the scaffold
 2. Build the home page (`/`) — project grid with cards per SPEC.md
 3. Build the project view (`/projects/[slug]`) — task sheet grid
 4. Task grid must support:
@@ -113,6 +116,7 @@ This repo (`1000Problems/Vybe`) has an old SwiftUI scaffold that needs to be rep
 
 ## What NOT To Do
 
+- Do NOT commit or push — Angel handles git
 - Do NOT create user accounts or a users table — password gate only
 - Do NOT add WebSocket/real-time features — simple fetch/refetch
 - Do NOT add a sidebar navigation — project grid → project view → back
@@ -130,23 +134,9 @@ This repo (`1000Problems/Vybe`) has an old SwiftUI scaffold that needs to be rep
 - Component libraries (shadcn etc) are fine if they speed up the build
 - Dense layout — productivity tool, not marketing site. Maximize information density.
 
-## Commit Strategy
-
-Commit after each major step:
-1. "Replace SwiftUI scaffold with Next.js project"
-2. "Add database schema, migrations, seed data, and auth"
-3. "Add projects API and tasks API with full CRUD"
-4. "Add home page with project grid"
-5. "Add project view with task grid and inline editing"
-6. "Add Google Drive integration and file upload pipeline"
-7. "Add video studio page and quick add"
-8. "Add executor API and digest endpoint"
-
-Push to main after each commit. Vercel auto-deploys.
-
 ## Environment Setup
 
-Before starting, confirm these env vars are available (ask the user if not):
+Before starting, confirm these env vars are available in `.env.local` (ask the user if not):
 - `DATABASE_URL` — Neon PostgreSQL connection string (shared instance)
 - `VYBEPM_API_KEY` — any secure random string
 - `VYBEPM_PASSWORD` — shared password for web UI access

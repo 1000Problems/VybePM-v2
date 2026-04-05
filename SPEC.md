@@ -12,6 +12,29 @@ The core insight: tasks aren't just dev work. They include animations, design, c
 2. **Project-scoped views.** No flat list with a project dropdown. Home screen shows projects, you tap into one and see only that project's tasks.
 3. **Images and files are first-class.** Every task can have files attached — screenshots, mockups, videos, reference material, generated output. All files go to Google Drive via signed URL upload. Same path for a 200KB screenshot and a 500MB video.
 4. **Two users max.** Angel + one collaborator. No multi-tenant complexity. Simple password gate.
+5. **Video creation is a first-class action.** Requesting a video should be as fast as sending a message — type, send, done.
+
+## UI Language
+
+**All user-facing UI text must be in Spanish.** This includes labels, buttons, placeholders, status text, headings, error messages, and any copy the user sees. Code (variable names, comments, API responses) stays in English. Examples:
+
+- "Projects" → "Proyectos"
+- "Tasks" → "Tareas"
+- "Pending" → "Pendiente"
+- "In Progress" → "En Progreso"
+- "Review" → "Revisión"
+- "Done" → "Completado"
+- "Submit" → "Enviar"
+- "New Task" → "Nueva Tarea"
+- "Video Requests" → "Solicitudes de Video"
+- "Describe a video..." → "Describe un video..."
+- "View video" → "Ver video"
+- "See all" → "Ver todo"
+- "Back to projects" → "Volver a proyectos"
+- "Loading..." → "Cargando..."
+- "Completed" → "Completados"
+- "Password" → "Contraseña"
+- "Login" → "Iniciar sesión"
 
 ## Architecture
 
@@ -59,17 +82,19 @@ This means:
 
 ## Data Model
 
-### projects
+All tables prefixed with `vybepm_` — shared Neon instance.
+
+### vybepm_projects
 ```sql
-CREATE TABLE projects (
+CREATE TABLE vybepm_projects (
     id              SERIAL PRIMARY KEY,
-    name            VARCHAR(100) NOT NULL UNIQUE,     -- slug: "ytcombinator"
-    display_name    VARCHAR(200) NOT NULL,             -- "YTCombinator"
-    description     TEXT,                              -- short project description
-    tech_stack      TEXT[],                            -- ["Next.js", "TypeScript", "Neon"]
-    github_repo     VARCHAR(200),                      -- "1000Problems/ytcombinator"
-    deploy_url      VARCHAR(500),                      -- "https://ytcombinator.1000problems.com"
-    color           VARCHAR(7),                        -- hex color for UI: "#58a6ff"
+    name            VARCHAR(100) NOT NULL UNIQUE,
+    display_name    VARCHAR(200) NOT NULL,
+    description     TEXT,
+    tech_stack      TEXT[],
+    github_repo     VARCHAR(200),
+    deploy_url      VARCHAR(500),
+    color           VARCHAR(7),
     sort_order      INTEGER DEFAULT 0,
     is_active       BOOLEAN DEFAULT true,
     created_at      TIMESTAMPTZ DEFAULT NOW(),
@@ -77,17 +102,25 @@ CREATE TABLE projects (
 );
 ```
 
-### tasks
+**Seed data must include a pseudo-project for video requests:**
 ```sql
-CREATE TABLE tasks (
+INSERT INTO vybepm_projects (name, display_name, description, color, sort_order)
+VALUES ('prompts', 'Prompts', 'Video generation requests', '#e040fb', 0);
+```
+
+This "Prompts" project is the bucket for all video requests created via the Video Command Bar. It does NOT appear in the project grid on the home page — it's hidden from the normal project list. Tasks are created against it, but the UI for viewing them is the Video Command Bar feed, not a project view.
+
+### vybepm_tasks
+```sql
+CREATE TABLE vybepm_tasks (
     id              SERIAL PRIMARY KEY,
-    project_id      INTEGER NOT NULL REFERENCES projects(id),
+    project_id      INTEGER NOT NULL REFERENCES vybepm_projects(id),
     title           VARCHAR(500) NOT NULL,
     description     TEXT,
     task_type       VARCHAR(30) NOT NULL DEFAULT 'dev'
                     CHECK (task_type IN ('dev', 'design', 'animation', 'content', 'deploy', 'report', 'other')),
     priority        INTEGER NOT NULL DEFAULT 2
-                    CHECK (priority BETWEEN 1 AND 4),  -- 1=critical, 2=high, 3=medium, 4=low
+                    CHECK (priority BETWEEN 1 AND 4),
     status          VARCHAR(30) NOT NULL DEFAULT 'pending'
                     CHECK (status IN ('pending', 'in_progress', 'review', 'checked_in', 'deployed', 'done')),
     assignee        VARCHAR(30) DEFAULT 'angel'
@@ -99,28 +132,28 @@ CREATE TABLE tasks (
     completed_at    TIMESTAMPTZ
 );
 
-CREATE INDEX idx_tasks_project ON tasks(project_id);
-CREATE INDEX idx_tasks_status ON tasks(status);
-CREATE INDEX idx_tasks_assignee ON tasks(assignee);
+CREATE INDEX idx_vybepm_tasks_project ON vybepm_tasks(project_id);
+CREATE INDEX idx_vybepm_tasks_status ON vybepm_tasks(status);
+CREATE INDEX idx_vybepm_tasks_assignee ON vybepm_tasks(assignee);
 ```
 
-### attachments
+### vybepm_attachments
 ```sql
-CREATE TABLE attachments (
+CREATE TABLE vybepm_attachments (
     id              SERIAL PRIMARY KEY,
-    task_id         INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
-    drive_file_id   VARCHAR(200) NOT NULL,             -- Google Drive file ID
-    url             VARCHAR(2000) NOT NULL,            -- Google Drive view/download link
+    task_id         INTEGER NOT NULL REFERENCES vybepm_tasks(id) ON DELETE CASCADE,
+    drive_file_id   VARCHAR(200) NOT NULL,
+    url             VARCHAR(2000) NOT NULL,
     file_name       VARCHAR(500),
-    file_type       VARCHAR(50),                       -- "image/png", "video/mp4", "application/pdf"
-    file_size       BIGINT,                            -- bytes (BIGINT for large videos)
-    thumbnail_url   VARCHAR(2000),                     -- Drive thumbnail link (auto-generated by Drive)
+    file_type       VARCHAR(50),
+    file_size       BIGINT,
+    thumbnail_url   VARCHAR(2000),
     caption         TEXT,
     created_by      VARCHAR(30) DEFAULT 'angel',
     created_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_attachments_task ON attachments(task_id);
+CREATE INDEX idx_vybepm_attachments_task ON vybepm_attachments(task_id);
 ```
 
 ## Status State Machine
@@ -143,14 +176,50 @@ review → done               (approved, no deploy step)
 
 ## Pages & UI
 
-### 1. Home — Project Grid (`/`)
+**All UI text in Spanish.** See "UI Language" section above for translations.
 
-Grid of project cards. Each card shows:
+### 1. Home Page (`/`)
+
+The home page has two sections stacked vertically:
+
+#### Top Section: Video Command Bar ("Solicitudes de Video")
+
+A full-width text input with a send button on the right. Visually elevated with a slightly different background from the project grid below. This is the first thing you see.
+
+- **Input placeholder:** "Describe un video..." (muted gray)
+- **Send button:** arrow icon or "Enviar"
+- **Behavior:** Type a prompt, hit Enter or click send. Input clears immediately. User can start typing next prompt right away.
+- **What happens on send:** POST to `/api/projects/prompts/tasks` with `{ title: "<prompt text>", task_type: "animation", assignee: "cowork", priority: 2 }`
+
+Below the input, a compact feed shows the last 5-10 video requests:
+
+```
+"Intro cinemática de 30s con logo flotando"          ● Procesando...
+"Animación explainer para kitchen inventory"          ✓ Ver video
+"Clip social — demo de keywords ytcombinator"         ● En cola
+```
+
+Three visual states:
+- **Pendiente (queued):** gray dot + "En cola"
+- **En Progreso (rendering):** blue animated dot + "Procesando..."
+- **Completado (done):** green checkmark + "Ver video" link (opens Google Drive file)
+
+Each row shows: prompt text (truncated if long), status indicator, and link when complete.
+
+A "Ver todo" link at the bottom expands to full history or navigates to a dedicated page if the list gets long.
+
+**Optimistic UI:** When user hits send, the new request appears in the feed immediately as "En cola" before the API responds. If the API fails, show an error state on that row.
+
+**The "Prompts" pseudo-project does NOT appear in the project grid below.** Filter it out when querying projects for the grid. The Video Command Bar is its only UI.
+
+#### Bottom Section: Project Grid ("Proyectos")
+
+Grid of project cards (excluding the "Prompts" pseudo-project). Each card shows:
 - Project color bar (left edge)
 - Project name + short description
 - Tech stack badges
-- Task counts: pending | in progress | total
-- Last activity (from git or task updates)
+- Task counts: pendiente | en progreso | total
+- Last activity
 
 Click a card → navigate to `/projects/[slug]`
 
@@ -158,11 +227,11 @@ Click a card → navigate to `/projects/[slug]`
 
 ### 2. Project View — Task Sheet (`/projects/[slug]`)
 
-Top bar: project name, tech badges, GitHub link, deploy link, "back to projects" breadcrumb.
+Top bar: project name, tech badges, GitHub link, deploy link, "Volver a proyectos" breadcrumb.
 
 Main area: **task grid** that behaves like a spreadsheet.
 - Rows = tasks, sorted by priority then sort_order
-- Columns: Priority (color dot), Title (editable inline), Type (dropdown), Status (dropdown with color), Assignee (dropdown), Attachments (thumbnail count), Updated
+- Columns: Prioridad (color dot), Título (editable inline), Tipo (dropdown), Estado (dropdown with color), Asignado (dropdown), Adjuntos (thumbnail count), Actualizado
 - Click a row to expand it into a detail panel (slides in from right or expands inline)
 - New task: empty row at the bottom, always visible. Click and start typing. Tab through columns.
 - Drag to reorder rows (updates sort_order)
@@ -173,50 +242,33 @@ Main area: **task grid** that behaves like a spreadsheet.
 - Click attachment thumbnails → lightbox view (images) or Drive link (videos/other)
 
 **Status colors:**
-- pending: gray
-- in_progress: blue
-- review: yellow
-- checked_in: green
-- deployed: purple
-- done: muted/dim (visually de-emphasized)
+- pendiente: gray
+- en_progreso: blue
+- revisión: yellow
+- registrado: green
+- desplegado: purple
+- completado: muted/dim (visually de-emphasized)
 
-**Completed tasks:** Tasks with status `done` collapse into a "Completed" section at the bottom of the list. Expandable, default collapsed. Shows completion date.
+**Completed tasks:** Tasks with status `done` collapse into a "Completados" section at the bottom. Expandable, default collapsed.
 
 ### 3. Task Detail (inline expand or `/projects/[slug]/tasks/[id]`)
 
 Full task view with:
-- Title (large, editable)
-- Description (markdown, editable)
-- All metadata (type, priority, status, assignee)
-- Attachment gallery (full-size images, video embeds or Drive links)
-- Activity log (status changes with timestamps)
-- Notes field (for executor to write what was done)
+- Título (large, editable)
+- Descripción (markdown, editable)
+- All metadata (tipo, prioridad, estado, asignado)
+- Galería de adjuntos (full-size images, video embeds or Drive links)
+- Registro de actividad (status changes with timestamps)
+- Notas field (for executor to write what was done)
 
-### 4. Video Studio (`/projects/[slug]/studio`)
-
-Dedicated page for requesting video/animation generation per project.
-
-**Layout:**
-- Request form at top: prompt text area, style dropdown (cinematic, explainer, social, custom), duration selector, reference image upload (uses same Drive signed URL flow)
-- Submit creates a task of type `animation` with status `pending` and assignee `cowork`
-- Below the form: gallery of completed video tasks for this project, showing thumbnail, prompt, status, and Drive link
-
-**Flow:**
-1. Angel fills out the form, optionally attaches reference images
-2. VybePM creates an `animation` task in the database
-3. Executor (Cowork) picks up the task, generates the video
-4. Executor uploads video to Drive via VybePM's upload API
-5. Executor marks task complete with the Drive link
-6. Angel sees the result in the studio gallery
-
-### 5. Quick Add (`/quick?project=[slug]`)
+### 4. Quick Add (`/quick?project=[slug]`)
 
 Minimal page optimized for mobile bookmarks. Just:
-- Project name (pre-filled from URL param, or dropdown if not specified)
-- Title input
-- Type selector
+- Proyecto (pre-filled from URL param, or dropdown if not specified)
+- Título input
+- Tipo selector
 - File drop zone
-- Submit button
+- Enviar button
 
 Bookmark this on your phone home screen for fast task entry on the go.
 
@@ -230,12 +282,14 @@ POST   /api/projects                    — Create project
 PATCH  /api/projects/[slug]             — Update project
 ```
 
+Note: GET /api/projects should accept an optional `?exclude=prompts` query param (or always exclude the Prompts pseudo-project from the default listing, and accept `?include_hidden=true` to include it). The home page project grid always excludes Prompts.
+
 ### Tasks
 ```
 GET    /api/projects/[slug]/tasks       — List tasks for project (filter by status, assignee)
 POST   /api/projects/[slug]/tasks       — Create task
 PATCH  /api/tasks/[id]                  — Update task (title, description, status, priority, assignee)
-DELETE /api/tasks/[id]                  — Delete task (soft delete or hard delete for pending only)
+DELETE /api/tasks/[id]                  — Delete task (hard delete for pending only)
 PATCH  /api/tasks/[id]/reorder          — Update sort_order
 ```
 
@@ -302,14 +356,12 @@ GOOGLE_DRIVE_FOLDER_ID=[id-of-shared-1000Problems-VybePM-folder]
 ```
 src/
   app/
-    page.tsx                          -- Home: project grid
+    page.tsx                          -- Home: Video Command Bar + project grid
     login/
-      page.tsx                        -- Password gate
+      page.tsx                        -- Password gate ("Iniciar sesión")
     projects/
       [slug]/
         page.tsx                      -- Project view: task sheet
-        studio/
-          page.tsx                    -- Video studio: request + gallery
     quick/
       page.tsx                        -- Quick add (mobile bookmark)
     api/
@@ -351,6 +403,8 @@ src/
     types.ts                          -- Shared TypeScript types
     drive.ts                          -- Google Drive service account client + signed URL generation
   components/
+    VideoCommandBar.tsx               -- Prompt input + recent requests feed
+    VideoRequestRow.tsx               -- Single row in the video feed
     ProjectCard.tsx
     TaskGrid.tsx
     TaskRow.tsx
@@ -359,7 +413,6 @@ src/
     FileUpload.tsx                    -- Unified upload component (signed URL flow)
     StatusBadge.tsx
     InlineEdit.tsx
-    VideoStudio.tsx
     QuickAdd.tsx
     PasswordGate.tsx
 ```
@@ -376,42 +429,49 @@ src/
 8. **No secrets in code.** All credentials via environment variables. Google service account key NEVER committed.
 9. **Responsive.** Must work on mobile. Task grid collapses to card view on screens < 768px.
 10. **One upload path.** All files go through the same signed URL → Google Drive pipeline. No special cases for different file sizes.
+11. **All UI text in Spanish.** Labels, buttons, placeholders, status text, headings, errors — everything user-facing. Code stays in English.
 
 ## Build Priority
 
-### Phase 1: Core (MVP)
-1. Database schema + migrations (use existing shared Neon — create VybePM tables with `vybepm_` prefix to avoid conflicts)
+### Phase 1: Core (MVP) — DONE
+1. Database schema + migrations
 2. Password gate (login page + cookie middleware)
-3. Projects API + seed data (all 6 1000Problems projects)
+3. Projects API + seed data (all 6 1000Problems projects + "Prompts" pseudo-project)
 4. Tasks API (CRUD + status transitions)
 5. Home page with project grid
 6. Project view with task grid (inline editing, status changes)
 7. New task creation (inline at bottom of grid)
 
-### Phase 2: File Upload
-8. Google Drive service account integration (`lib/drive.ts`)
-9. Signed URL upload flow (`/api/upload/request` + `/api/upload/complete`)
-10. Attachments API (link Drive files to tasks)
-11. Drag-and-drop + paste upload on task rows
-12. Attachment thumbnails and lightbox
+### Phase 1.5: Video Command Bar + Spanish UI
+8. Add "Prompts" pseudo-project to seed data (hidden from project grid)
+9. Build VideoCommandBar component — text input + send + recent requests feed
+10. Add VideoCommandBar to home page above the project grid
+11. Convert all UI text to Spanish (labels, buttons, placeholders, status text, errors)
+12. Exclude "Prompts" from project grid query
 
-### Phase 3: Studio & Mobile
-13. Video studio page (`/projects/[slug]/studio`)
-14. Quick add page (`/quick`)
-15. Mobile responsive layout
-16. Task reordering (drag and drop)
-17. Completed tasks section (collapsible)
+### Phase 2: File Upload
+13. Google Drive service account integration (`lib/drive.ts`)
+14. Signed URL upload flow (`/api/upload/request` + `/api/upload/complete`)
+15. Attachments API (link Drive files to tasks)
+16. Drag-and-drop + paste upload on task rows
+17. Attachment thumbnails and lightbox
+
+### Phase 3: Mobile & Polish
+18. Quick add page (`/quick`)
+19. Mobile responsive layout
+20. Task reordering (drag and drop)
+21. Completed tasks section (collapsible)
 
 ### Phase 4: Executor Integration
-18. Executor API endpoints
-19. Task pickup with atomic locking
-20. Completion reporting with notes + attachments
-21. Digest API for daily reports
+22. Executor API endpoints
+23. Task pickup with atomic locking
+24. Completion reporting with notes + attachments
+25. Digest API for daily reports
 
 ## Deployment
 
-- GitHub repo: `1000Problems/Vybe` (repurpose existing repo — delete SwiftUI scaffold, fresh start)
-- Vercel project: auto-deploy on push to main
-- Domain: TBD (vybepm.1000problems.com or similar)
+- GitHub repo: `1000Problems/VybePM-v2`
+- Vercel project: `vybepm-v2` (auto-deploy on push to main)
+- Domain: vybe.1000problems.com (update DNS from old app)
 - Neon database: shared free tier instance (prefix tables with `vybepm_`)
 - Google Drive: shared folder `1000Problems/VybePM` with service account + collaborator access
