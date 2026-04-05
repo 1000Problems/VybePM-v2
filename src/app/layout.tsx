@@ -16,7 +16,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){var t=localStorage.getItem('vybepm-theme');if(t==='light')document.documentElement.setAttribute('data-theme','light')})()`,
+            __html: `(function(){var t=localStorage.getItem('vybepm-theme');if(t!=='dark')document.documentElement.setAttribute('data-theme','light')})()`,
           }}
         />
       </head>

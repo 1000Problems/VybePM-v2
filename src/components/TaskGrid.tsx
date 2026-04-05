@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Task, TaskStatus, TaskType, Assignee, VALID_TASK_TYPES, VALID_STATUSES, VALID_ASSIGNEES, STATUS_TRANSITIONS, STATUS_LABELS, TASK_TYPE_LABELS, ASSIGNEE_LABELS, PRIORITY_LABELS } from '@/lib/types';
 import StatusBadge from './StatusBadge';
 import TaskDetail from './TaskDetail';
@@ -25,6 +25,20 @@ export default function TaskGrid({ projectSlug, tasks, onTasksChange }: TaskGrid
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
   const [creating, setCreating] = useState(false);
+
+  const desktopTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const mobileTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const autoResize = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  };
+
+  useEffect(() => {
+    autoResize(desktopTextareaRef.current);
+    autoResize(mobileTextareaRef.current);
+  }, [newTaskTitle]);
 
   const activeTasks = tasks.filter((t) => t.status !== 'done');
   const completedTasks = tasks.filter((t) => t.status === 'done');
@@ -230,20 +244,22 @@ export default function TaskGrid({ projectSlug, tasks, onTasksChange }: TaskGrid
         {activeTasks.map((t) => renderTaskRow(t, false))}
 
         {/* New task row */}
-        <div className="grid grid-cols-[28px_1fr_90px_100px_90px_80px_32px] gap-2 items-center px-3 py-2 border-b border-[var(--border)]">
-          <div />
-          <input
+        <div className="grid grid-cols-[28px_1fr_90px_100px_90px_80px_32px] gap-2 items-start px-3 py-2 border-b border-[var(--border)]">
+          <div className="pt-1.5" />
+          <textarea
+            ref={desktopTextareaRef}
             value={newTaskTitle}
             onChange={(e) => setNewTaskTitle(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') createTask(); }}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); createTask(); } }}
             placeholder="Nueva tarea..."
-            className="w-full bg-transparent text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm outline-none"
+            rows={3}
+            className="w-full bg-transparent text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm outline-none resize-none overflow-hidden"
           />
           <div />
           <div />
           <div />
           {newTaskTitle.trim() && (
-            <button onClick={createTask} disabled={creating} className="text-xs text-[var(--accent-blue)] hover:underline">
+            <button onClick={createTask} disabled={creating} className="text-xs text-[var(--accent-blue)] hover:underline pt-1.5">
               {creating ? '...' : 'Agregar'}
             </button>
           )}
@@ -272,12 +288,14 @@ export default function TaskGrid({ projectSlug, tasks, onTasksChange }: TaskGrid
 
         {/* New task input */}
         <div className="bg-[var(--bg-secondary)] border border-[var(--border)] border-dashed rounded-lg p-3">
-          <input
+          <textarea
+            ref={mobileTextareaRef}
             value={newTaskTitle}
             onChange={(e) => setNewTaskTitle(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') createTask(); }}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); createTask(); } }}
             placeholder="Nueva tarea..."
-            className="w-full bg-transparent text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm outline-none"
+            rows={3}
+            className="w-full bg-transparent text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm outline-none resize-none overflow-hidden"
           />
           {newTaskTitle.trim() && (
             <button onClick={createTask} disabled={creating} className="mt-2 text-xs text-[var(--accent-blue)] hover:underline">

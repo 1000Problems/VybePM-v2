@@ -5,8 +5,8 @@ import { useState, useEffect } from 'react';
 type Theme = 'dark' | 'light';
 
 function getStoredTheme(): Theme {
-  if (typeof window === 'undefined') return 'dark';
-  return (localStorage.getItem('vybepm-theme') as Theme) || 'dark';
+  if (typeof window === 'undefined') return 'light';
+  return (localStorage.getItem('vybepm-theme') as Theme) || 'light';
 }
 
 function applyTheme(theme: Theme): void {
@@ -18,7 +18,7 @@ function applyTheme(theme: Theme): void {
 }
 
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>('dark');
+  const [theme, setTheme] = useState<Theme>('light');
 
   useEffect(() => {
     const stored = getStoredTheme();
