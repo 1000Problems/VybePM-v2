@@ -1,6 +1,6 @@
 'use client';
 
-import { TaskStatus } from '@/lib/types';
+import { TaskStatus, STATUS_LABELS } from '@/lib/types';
 
 const STATUS_COLORS: Record<TaskStatus, { bg: string; text: string }> = {
   pending: { bg: 'bg-gray-500/20', text: 'text-gray-400' },
@@ -9,15 +9,6 @@ const STATUS_COLORS: Record<TaskStatus, { bg: string; text: string }> = {
   checked_in: { bg: 'bg-green-500/20', text: 'text-green-400' },
   deployed: { bg: 'bg-purple-500/20', text: 'text-purple-400' },
   done: { bg: 'bg-gray-500/10', text: 'text-gray-500' },
-};
-
-const STATUS_LABELS: Record<TaskStatus, string> = {
-  pending: 'Pendiente',
-  in_progress: 'En Progreso',
-  review: 'Revisión',
-  checked_in: 'Registrado',
-  deployed: 'Desplegado',
-  done: 'Completado',
 };
 
 export default function StatusBadge({ status }: { status: TaskStatus }) {

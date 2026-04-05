@@ -35,19 +35,19 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0e1117]">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)]">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm p-8 bg-[#161b22] border border-[#30363d] rounded-lg"
+        className="w-full max-w-sm p-8 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg"
       >
-        <h1 className="text-xl font-semibold text-[#e6edf3] mb-6">VybePM</h1>
+        <h1 className="text-xl font-semibold text-[var(--text-primary)] mb-6">VybePM</h1>
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Contraseña"
           autoFocus
-          className="w-full px-3 py-2 bg-[#0e1117] border border-[#30363d] rounded text-[#e6edf3] placeholder-[#484f58] focus:outline-none focus:border-[#58a6ff] mb-4"
+          className="w-full px-3 py-2 bg-[var(--bg-primary)] border border-[var(--border)] rounded text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-blue)] mb-4"
         />
         {error && (
           <p className="text-red-400 text-sm mb-4">{error}</p>
@@ -55,7 +55,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-2 bg-[#238636] text-white rounded font-medium hover:bg-[#2ea043] disabled:opacity-50 transition-colors"
+          className="w-full py-2 bg-[var(--accent-green)] text-white rounded font-medium hover:bg-[var(--accent-green-hover)] disabled:opacity-50 transition-colors"
         >
           {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
         </button>

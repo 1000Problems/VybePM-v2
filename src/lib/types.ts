@@ -58,6 +58,39 @@ export const VALID_TASK_TYPES: TaskType[] = ['dev', 'design', 'animation', 'cont
 export const VALID_STATUSES: TaskStatus[] = ['pending', 'in_progress', 'review', 'checked_in', 'deployed', 'done'];
 export const VALID_ASSIGNEES: Assignee[] = ['angel', 'cowork', 'claude-code'];
 
+// Spanish display labels
+export const STATUS_LABELS: Record<TaskStatus, string> = {
+  pending: 'Pendiente',
+  in_progress: 'En Progreso',
+  review: 'Revisión',
+  checked_in: 'Registrado',
+  deployed: 'Desplegado',
+  done: 'Completado',
+};
+
+export const TASK_TYPE_LABELS: Record<TaskType, string> = {
+  dev: 'Desarrollo',
+  design: 'Diseño',
+  animation: 'Animación',
+  content: 'Contenido',
+  deploy: 'Despliegue',
+  report: 'Reporte',
+  other: 'Otro',
+};
+
+export const ASSIGNEE_LABELS: Record<Assignee, string> = {
+  angel: 'Angel',
+  cowork: 'Cowork',
+  'claude-code': 'Claude Code',
+};
+
+export const PRIORITY_LABELS: Record<number, string> = {
+  1: 'Crítica',
+  2: 'Alta',
+  3: 'Media',
+  4: 'Baja',
+};
+
 // State machine: maps current status to allowed next statuses
 export const STATUS_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
   pending: ['in_progress'],

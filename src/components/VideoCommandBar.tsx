@@ -38,6 +38,8 @@ export default function VideoCommandBar() {
 
   useEffect(() => {
     fetchRequests();
+    const interval = setInterval(fetchRequests, 10000);
+    return () => clearInterval(interval);
   }, [fetchRequests]);
 
   const handleSubmit = async (e?: FormEvent) => {
@@ -93,7 +95,7 @@ export default function VideoCommandBar() {
     switch (req.status) {
       case 'pending':
         return (
-          <span className="flex items-center gap-1.5 text-xs text-[#8b949e] shrink-0">
+          <span className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] shrink-0">
             <span className="w-2 h-2 rounded-full bg-gray-500" />
             En cola
           </span>
@@ -129,8 +131,8 @@ export default function VideoCommandBar() {
   };
 
   return (
-    <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-4 mb-6">
-      <h2 className="text-sm font-medium text-[#8b949e] uppercase tracking-wide mb-3">
+    <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg p-4 mb-6">
+      <h2 className="text-sm font-medium text-[var(--text-secondary)] uppercase tracking-wide mb-3">
         Solicitudes de Video
       </h2>
 
@@ -141,7 +143,7 @@ export default function VideoCommandBar() {
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="Describe un video..."
-          className="flex-1 bg-[#0e1117] border border-[#30363d] rounded-md px-3 py-2 text-sm text-[#e6edf3] placeholder-[#484f58] outline-none focus:border-[#e040fb] transition-colors"
+          className="flex-1 bg-[var(--bg-primary)] border border-[var(--border)] rounded-md px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:border-[#e040fb] transition-colors"
         />
         <button
           type="submit"
@@ -154,16 +156,16 @@ export default function VideoCommandBar() {
 
       {/* Feed */}
       {loading ? (
-        <p className="text-xs text-[#484f58]">Cargando...</p>
+        <p className="text-xs text-[var(--text-muted)]">Cargando...</p>
       ) : requests.length > 0 ? (
         <div className="space-y-1">
           {requests.map((req) => (
             <div
               key={req.id}
-              className="flex items-center justify-between gap-3 py-1.5 px-2 rounded hover:bg-[#0e1117]/50 text-sm"
+              className="flex items-start justify-between gap-3 py-1.5 px-2 rounded hover:bg-[var(--bg-primary)]/50 text-sm"
             >
-              <span className="text-[#e6edf3] truncate flex-1 min-w-0">{req.title}</span>
-              {renderStatus(req)}
+              <span className="text-[var(--text-primary)] flex-1 min-w-0 line-clamp-3">{req.title}</span>
+              <div className="pt-0.5 shrink-0">{renderStatus(req)}</div>
             </div>
           ))}
         </div>
