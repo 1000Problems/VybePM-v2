@@ -115,8 +115,8 @@ const projects = [
 async function seed() {
   for (const p of projects) {
     await sql`
-      INSERT INTO vybepm_projects (name, display_name, description, tech_stack, github_repo, deploy_url, color, sort_order)
-      VALUES (${p.name}, ${p.display_name}, ${p.description}, ${p.tech_stack}, ${p.github_repo}, ${p.deploy_url}, ${p.color}, ${projects.indexOf(p)})
+      INSERT INTO vybepm_projects (name, display_name, description, tech_stack, github_repo, deploy_url, color, sort_order, is_active)
+      VALUES (${p.name}, ${p.display_name}, ${p.description}, ${p.tech_stack}, ${p.github_repo}, ${p.deploy_url}, ${p.color}, ${projects.indexOf(p)}, true)
       ON CONFLICT (name) DO UPDATE SET
         display_name = EXCLUDED.display_name,
         description = EXCLUDED.description,
@@ -124,14 +124,17 @@ async function seed() {
         github_repo = EXCLUDED.github_repo,
         deploy_url = EXCLUDED.deploy_url,
         color = EXCLUDED.color,
-        sort_order = EXCLUDED.sort_order
+        sort_order = EXCLUDED.sort_order,
+        is_active = true
     `;
     console.log(`Seeded: ${p.name}`);
   }
 
   // Deactivate removed projects (voiceq-api, popiPlayAssets, etc.)
+  // IMPORTANT: Use ANY() syntax — Neon tagged templates pass arrays as a single
+  // PostgreSQL parameter, which breaks NOT IN. ANY() handles arrays correctly.
   const activeNames = projects.map(p => p.name);
-  await sql`UPDATE vybepm_projects SET is_active = false WHERE name NOT IN (${activeNames}) AND is_active = true`;
+  await sql`UPDATE vybepm_projects SET is_active = false WHERE NOT (name = ANY(${activeNames})) AND is_active = true`;
 
   console.log(`\nSeed complete — ${projects.length} active projects`);
 }
