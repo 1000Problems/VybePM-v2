@@ -68,6 +68,16 @@ export default function ProjectPage({ params }: { params: Promise<{ slug: string
                 {project.github_repo}
               </a>
             )}
+            {project.deploy_url && (
+              <a
+                href={project.deploy_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-[var(--accent-blue)] hover:underline flex items-center gap-1"
+              >
+                ↗ {t('project.viewLive')}
+              </a>
+            )}
           </div>
 
           {project.description && (

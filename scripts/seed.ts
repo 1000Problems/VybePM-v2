@@ -48,21 +48,14 @@ const projects = [
   {
     name: 'KitchenInventory',
     display_name: 'KitchenInventory',
-    description: 'AI-powered kitchen inventory with voice input',
+    description: 'AI-powered kitchen inventory with voice input — paused, waiting for on-phone local LLM',
     tech_stack: ['Swift', 'SwiftUI', 'SwiftData'],
     github_repo: '1000Problems/KitchenInventory',
     deploy_url: null,
     color: '#3fb950',
   },
-  {
-    name: 'voiceq-api',
-    display_name: 'VoiceQ API',
-    description: 'Voice-activated task queue API',
-    tech_stack: ['Next.js', 'TypeScript', 'Neon'],
-    github_repo: '1000Problems/voiceq-api',
-    deploy_url: 'https://voiceq-api.vercel.app',
-    color: '#d29922',
-  },
+  // voiceq-api: ARCHIVED 2026-04-06 — redundant, Vybe talks directly to VybePM now
+  // Removed from active list so deactivation logic sets is_active=false
   {
     name: 'RubberJoints-iOS',
     display_name: 'RubberJoints iOS',
@@ -108,6 +101,15 @@ const projects = [
     deploy_url: null,
     color: '#e040fb',
   },
+  {
+    name: 'Skills',
+    display_name: 'Skills',
+    description: 'Central skill repository for Cowork and Claude Code — versioned instruction files',
+    tech_stack: ['Markdown', 'YAML'],
+    github_repo: '1000Problems/skills',
+    deploy_url: null,
+    color: '#79c0ff',
+  },
 ];
 
 async function seed() {
@@ -127,11 +129,11 @@ async function seed() {
     console.log(`Seeded: ${p.name}`);
   }
 
-  // Deactivate removed projects
+  // Deactivate removed projects (voiceq-api, popiPlayAssets, etc.)
   const activeNames = projects.map(p => p.name);
   await sql`UPDATE vybepm_projects SET is_active = false WHERE name NOT IN (${activeNames}) AND is_active = true`;
 
-  console.log(`\nSeed complete — ${projects.length} projects`);
+  console.log(`\nSeed complete — ${projects.length} active projects`);
 }
 
 seed().catch((e) => {

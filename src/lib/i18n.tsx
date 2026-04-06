@@ -74,6 +74,7 @@ const translations = {
   'project.pendingPlural': { es: 'pendientes', en: 'pending' },
   'project.inProgress': { es: 'en progreso', en: 'in progress' },
   'project.total': { es: 'total', en: 'total' },
+  'project.viewLive': { es: 'Ver en vivo', en: 'View Live' },
 
   'auth.password': { es: 'Contraseña', en: 'Password' },
   'auth.login': { es: 'Iniciar sesión', en: 'Log in' },

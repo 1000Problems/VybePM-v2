@@ -35,6 +35,19 @@ export default function ProjectCard({ project }: { project: ProjectWithCounts })
             </div>
           )}
 
+          {/* Deploy link */}
+          {project.deploy_url && (
+            <a
+              href={project.deploy_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1 mt-3 text-xs text-[var(--accent-blue)] hover:underline"
+            >
+              ↗ {t('project.viewLive')}
+            </a>
+          )}
+
           {/* Task counts */}
           <div className="flex items-center gap-4 mt-4 text-xs text-[var(--text-secondary)]">
             {project.pending_count > 0 && (
