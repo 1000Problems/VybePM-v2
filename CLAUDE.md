@@ -2,6 +2,29 @@
 
 You are building VybePM, the task orchestration hub for 1000Problems. Read SPEC.md first — it is the source of truth for architecture, data model, API, and UI.
 
+## Before Implementing Any TASK
+
+1. **Read the full TASK spec** — understand scope, acceptance criteria, and the Do Not Change section.
+2. **Query LightRAG** for cross-project context before touching shared patterns:
+   ```bash
+   curl -X POST http://localhost:9621/query \
+     -H "Content-Type: application/json" \
+     -d '{"query": "architectural context for [feature being implemented]", "mode": "hybrid"}'
+   ```
+3. **Stay in scope.** Only modify files and components explicitly listed in the TASK spec. If you discover something that needs changing outside the spec, create a new VybePM task — do NOT fix it inline.
+4. **Verify before committing.** Run `npm run build`, confirm zero type errors, and check that nothing outside the TASK scope changed with `git diff`.
+
+### Protected Areas (global — TASK specs may add more)
+
+These components are stable and must NOT be modified unless the TASK spec explicitly names them:
+
+- `src/app/api/executor/` — entire executor API (pickup, complete, create, digest). This is the automation backbone.
+- `src/lib/types.ts` — TaskStatus enum and STATUS_TRANSITIONS map. These define the state machine.
+- `src/lib/auth.ts` — password cookie + API key validation
+- `src/lib/db.ts` — Neon connection helper
+- Database schema — additive changes only (new columns/tables), never drop or rename existing
+- State machine transitions — if a TASK needs a new status, it must explicitly define the migration path
+
 ## Git Rules
 
 DO NOT commit or push. Build and test only. Angel reviews the work and handles git himself.
