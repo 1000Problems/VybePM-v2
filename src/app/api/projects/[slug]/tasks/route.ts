@@ -100,7 +100,7 @@ export async function POST(
       ${(description as string) || null},
       ${(task_type as string) || 'dev'},
       ${(priority as Priority) || 2},
-      ${(assignee as string) || 'angel'},
+      ${(assignee as string) || 'claude-code'},
       ${(sort_order as number) || 0}
     )
     RETURNING *
