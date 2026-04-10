@@ -11,6 +11,7 @@ export interface Project {
   tech_stack: string[];
   github_repo: string | null;
   deploy_url: string | null;
+  whiteboard_url: string | null;
   color: string | null;
   sort_order: number;
   is_active: boolean;

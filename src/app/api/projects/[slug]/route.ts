@@ -44,13 +44,16 @@ export async function PATCH(
   if (body.tech_stack !== undefined && !Array.isArray(body.tech_stack)) {
     return NextResponse.json({ error: 'tech_stack must be an array' }, { status: 400 });
   }
+  if (body.whiteboard_url !== undefined && (typeof body.whiteboard_url !== 'string' || (body.whiteboard_url as string).length > 500)) {
+    return NextResponse.json({ error: 'whiteboard_url must be a string (max 500 chars)' }, { status: 400 });
+  }
 
   // Build dynamic update
   const updates: string[] = [];
   const values: unknown[] = [];
   let paramIndex = 1;
 
-  const allowedFields = ['display_name', 'description', 'tech_stack', 'github_repo', 'deploy_url', 'color', 'sort_order', 'is_active'];
+  const allowedFields = ['display_name', 'description', 'tech_stack', 'github_repo', 'deploy_url', 'whiteboard_url', 'color', 'sort_order', 'is_active'];
 
   for (const field of allowedFields) {
     if (body[field] !== undefined) {

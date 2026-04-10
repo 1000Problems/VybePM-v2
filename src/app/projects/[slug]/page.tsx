@@ -130,6 +130,21 @@ export default function ProjectPage({ params }: { params: Promise<{ slug: string
                     ↗ {t('project.viewLive')}
                   </a>
                 )}
+
+                {project.whiteboard_url && (
+                  <a
+                    href={project.whiteboard_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="1" y="1" width="14" height="10" rx="1.5" />
+                      <path d="M5 14h6M8 11v3" />
+                    </svg>
+                    Whiteboard
+                  </a>
+                )}
               </div>
             </div>
           </div>
