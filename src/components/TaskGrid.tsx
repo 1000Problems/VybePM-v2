@@ -9,8 +9,8 @@ import TaskDetail from './TaskDetail';
 const PRIORITY_COLORS: Record<number, string> = {
   1: 'bg-red-500',
   2: 'bg-orange-400',
-  3: 'bg-yellow-400',
-  4: 'bg-gray-400',
+  3: 'bg-amber-400',
+  4: 'bg-slate-500',
 };
 
 interface TaskGridProps {
@@ -43,7 +43,13 @@ export default function TaskGrid({ projectSlug, tasks, onTasksChange }: TaskGrid
   }, [newTaskTitle]);
 
   const activeTasks = tasks.filter((t) => t.status !== 'done');
-  const completedTasks = tasks.filter((t) => t.status === 'done');
+  const completedTasks = tasks
+    .filter((t) => t.status === 'done')
+    .sort((a, b) => {
+      const aTime = a.completed_at ? new Date(a.completed_at).getTime() : 0;
+      const bTime = b.completed_at ? new Date(b.completed_at).getTime() : 0;
+      return bTime - aTime;
+    });
 
   const updateTask = useCallback(async (taskId: number, updates: Record<string, unknown>) => {
     await fetch(`/api/tasks/${taskId}`, {
@@ -115,10 +121,10 @@ export default function TaskGrid({ projectSlug, tasks, onTasksChange }: TaskGrid
     );
   };
 
-  const renderTaskRow = (task: Task, isDone: boolean) => (
-    <div key={task.id}>
+  const renderTaskRow = (task: Task, isDone: boolean, index: number = 0) => (
+    <div key={task.id} className="stagger-reveal" style={{ animationDelay: `${index * 30}ms` }}>
       <div
-        className={`group/row grid grid-cols-[28px_1fr_90px_100px_90px_80px_32px] gap-2 items-start px-3 py-2 border-b border-[var(--border)] hover:bg-[var(--bg-secondary)] text-sm cursor-pointer ${isDone ? 'opacity-50' : ''}`}
+        className={`group/row grid grid-cols-[28px_1fr_90px_100px_90px_80px_32px] gap-2 items-start px-3 py-2 border-b border-[var(--border)] hover:bg-[var(--bg-secondary)] text-sm cursor-pointer transition-colors duration-100 ${isDone ? 'opacity-50' : ''}`}
         onClick={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
       >
         {/* Priority dot */}
@@ -167,9 +173,11 @@ export default function TaskGrid({ projectSlug, tasks, onTasksChange }: TaskGrid
           {renderDropdown(task.id, 'assignee', task.assignee, VALID_ASSIGNEES)}
         </div>
 
-        {/* Updated */}
-        <div className="text-[var(--text-muted)] text-xs">
-          {new Date(task.updated_at).toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US', { month: 'short', day: 'numeric' })}
+        {/* Updated / Completed */}
+        <div className="text-[var(--text-muted)] text-xs" title={isDone && task.completed_at ? `Completed ${new Date(task.completed_at).toLocaleString(locale === 'es' ? 'es-ES' : 'en-US')}` : undefined}>
+          {isDone && task.completed_at
+            ? new Date(task.completed_at).toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US', { month: 'short', day: 'numeric' })
+            : new Date(task.updated_at).toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US', { month: 'short', day: 'numeric' })}
         </div>
 
         {/* Delete (pending only) */}
@@ -188,51 +196,84 @@ export default function TaskGrid({ projectSlug, tasks, onTasksChange }: TaskGrid
         </div>
       </div>
 
-      {/* Expanded detail panel */}
-      {expandedTaskId === task.id && (
-        <TaskDetail task={task} onUpdate={onTasksChange} onClose={() => setExpandedTaskId(null)} />
-      )}
+      {/* Expanded detail panel — animated with CSS grid trick */}
+      <div className={`task-detail-wrapper${expandedTaskId === task.id ? ' expanded' : ''}`}>
+        <div>
+          {expandedTaskId === task.id && (
+            <TaskDetail task={task} onUpdate={onTasksChange} onClose={() => setExpandedTaskId(null)} />
+          )}
+        </div>
+      </div>
     </div>
   );
 
   // Mobile card view
   const renderTaskCard = (task: Task, isDone: boolean) => (
-    <div key={task.id} className={`bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg p-3 ${isDone ? 'opacity-50' : ''}`}>
-      <div className="flex items-start gap-2 mb-2">
-        <span className={`w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${PRIORITY_COLORS[task.priority]}`} />
-        <span className="text-[var(--text-primary)] text-sm font-medium flex-1 min-w-0 line-clamp-3 break-words">{task.title}</span>
+    <div
+      key={task.id}
+      className={`border border-[var(--border)] rounded-xl overflow-hidden ${isDone ? 'opacity-50' : ''}`}
+      style={{ background: 'var(--bg-secondary)' }}
+    >
+      <div className="p-4">
+        <div className="flex items-start gap-3 mb-3">
+          <span className={`w-2.5 h-2.5 rounded-full mt-1 shrink-0 ${PRIORITY_COLORS[task.priority]}`} />
+          <span className="text-[var(--text-primary)] text-sm leading-snug flex-1 min-w-0 break-words" style={{ fontFamily: 'var(--font-body)' }}>
+            {task.title}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <StatusBadge status={task.status} />
+          <span className="text-[var(--text-secondary)] text-xs px-2 py-0.5 rounded-md border border-[var(--border-subtle)]" style={{ background: 'var(--bg-primary)' }}>
+            {t(TASK_TYPE_LABEL_KEYS[task.task_type] as TranslationKey)}
+          </span>
+          <span className="text-[var(--text-muted)] text-xs ml-auto">
+            {t(ASSIGNEE_LABEL_KEYS[task.assignee] as TranslationKey)}
+          </span>
+        </div>
+
+        {isDone && task.completed_at && (
+          <p className="text-[var(--text-muted)] text-xs mt-2">
+            {new Date(task.completed_at).toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+          </p>
+        )}
       </div>
-      <div className="flex items-center gap-2 flex-wrap">
-        <StatusBadge status={task.status} />
-        <span className="text-[var(--text-secondary)] text-xs">{t(TASK_TYPE_LABEL_KEYS[task.task_type] as TranslationKey)}</span>
-        <span className="text-[var(--text-muted)] text-xs ml-auto">{t(ASSIGNEE_LABEL_KEYS[task.assignee] as TranslationKey)}</span>
-      </div>
-      <div className="flex items-center gap-3 mt-2">
+
+      {/* Action row */}
+      <div className="flex items-center border-t border-[var(--border-subtle)] px-4 py-2.5 gap-3" style={{ background: 'var(--bg-elevated)' }}>
         <button
           onClick={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
-          className="text-xs text-[var(--accent-blue)] hover:underline"
+          className="text-xs text-[var(--accent-blue)] font-medium py-1"
         >
           {expandedTaskId === task.id ? t('task.close') : t('task.details')}
         </button>
         {task.status === 'pending' && (
           <button
             onClick={() => deleteTask(task.id)}
-            className="text-xs text-[var(--text-muted)] hover:text-red-400 ml-auto"
+            className="text-xs text-[var(--text-muted)] hover:text-red-400 ml-auto py-1 transition-colors"
           >
             {t('task.delete')}
           </button>
         )}
       </div>
-      {expandedTaskId === task.id && (
-        <TaskDetail task={task} onUpdate={onTasksChange} onClose={() => setExpandedTaskId(null)} />
-      )}
+
+      <div className={`task-detail-wrapper${expandedTaskId === task.id ? ' expanded' : ''}`}>
+        <div>
+          {expandedTaskId === task.id && (
+            <TaskDetail task={task} onUpdate={onTasksChange} onClose={() => setExpandedTaskId(null)} />
+          )}
+        </div>
+      </div>
     </div>
   );
 
   return (
     <div>
       {/* Desktop table header */}
-      <div className="hidden md:grid grid-cols-[28px_1fr_90px_100px_90px_80px_32px] gap-2 px-3 py-2 text-xs text-[var(--text-secondary)] border-b border-[var(--border)] uppercase tracking-wide font-medium">
+      <div
+        className="hidden md:grid grid-cols-[28px_1fr_90px_100px_90px_80px_32px] gap-2 px-3 py-2.5 text-[10px] text-[var(--text-muted)] border-b border-[var(--border)] uppercase tracking-[0.1em] font-semibold rounded-t-lg"
+        style={{ background: 'var(--bg-elevated)' }}
+      >
         <div />
         <div>{t('task.title')}</div>
         <div>{t('task.type')}</div>
@@ -244,11 +285,16 @@ export default function TaskGrid({ projectSlug, tasks, onTasksChange }: TaskGrid
 
       {/* Desktop rows */}
       <div className="hidden md:block">
-        {activeTasks.map((t) => renderTaskRow(t, false))}
+        {activeTasks.map((t, i) => renderTaskRow(t, false, i))}
 
         {/* New task row */}
-        <div className="grid grid-cols-[28px_1fr_90px_100px_90px_80px_32px] gap-2 items-start px-3 py-2 border-b border-[var(--border)]">
-          <div className="pt-1.5" />
+        <div
+          className="grid grid-cols-[28px_1fr_90px_100px_90px_80px_32px] gap-2 items-start px-3 py-2.5 border-b border-[var(--border)]"
+          style={{ background: newTaskTitle.trim() ? 'var(--bg-elevated)' : 'transparent', transition: 'background 0.15s' }}
+        >
+          <div className="flex justify-center pt-1.5">
+            <span className="text-[var(--text-muted)] text-base leading-none select-none">+</span>
+          </div>
           <textarea
             ref={desktopTextareaRef}
             value={newTaskTitle}
@@ -256,13 +302,18 @@ export default function TaskGrid({ projectSlug, tasks, onTasksChange }: TaskGrid
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); createTask(); } }}
             placeholder={t('task.new')}
             rows={3}
-            className="w-full bg-transparent text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm outline-none resize-none overflow-hidden"
+            className="w-full bg-transparent text-[var(--text-primary)] text-sm outline-none resize-none overflow-hidden new-task-placeholder"
+            style={{ fontFamily: 'var(--font-body)' }}
           />
           <div />
           <div />
           <div />
           {newTaskTitle.trim() && (
-            <button onClick={createTask} disabled={creating} className="text-xs text-[var(--accent-blue)] hover:underline pt-1.5">
+            <button
+              onClick={createTask}
+              disabled={creating}
+              className="text-xs font-medium text-[var(--accent-blue)] hover:underline pt-1.5 transition-opacity"
+            >
               {creating ? '...' : t('task.add')}
             </button>
           )}
@@ -270,17 +321,23 @@ export default function TaskGrid({ projectSlug, tasks, onTasksChange }: TaskGrid
 
         {/* Completed section */}
         {completedTasks.length > 0 && (
-          <div className="mt-2">
+          <div className="mt-4">
             <button
               onClick={() => setShowCompleted(!showCompleted)}
-              className="flex items-center gap-2 px-3 py-2 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] w-full"
+              className="flex items-center gap-2 w-full text-left group/completed"
             >
-              <span className="transition-transform" style={{ transform: showCompleted ? 'rotate(90deg)' : 'rotate(0)' }}>
-                &#9654;
+              <span
+                className="text-[var(--text-muted)] text-[10px] transition-transform duration-200"
+                style={{ transform: showCompleted ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block' }}
+              >
+                ▶
               </span>
-              {t('task.completed')} ({completedTasks.length})
+              <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-[0.1em] font-semibold group-hover/completed:text-[var(--text-secondary)] transition-colors">
+                {t('task.completed')} · {completedTasks.length}
+              </span>
+              <span className="flex-1 h-px bg-[var(--border-subtle)]" />
             </button>
-            {showCompleted && completedTasks.map((t) => renderTaskRow(t, true))}
+            {showCompleted && completedTasks.map((t, i) => renderTaskRow(t, true, i))}
           </div>
         )}
       </div>
@@ -290,31 +347,50 @@ export default function TaskGrid({ projectSlug, tasks, onTasksChange }: TaskGrid
         {activeTasks.map((t) => renderTaskCard(t, false))}
 
         {/* New task input */}
-        <div className="bg-[var(--bg-secondary)] border border-[var(--border)] border-dashed rounded-lg p-3">
-          <textarea
-            ref={mobileTextareaRef}
-            value={newTaskTitle}
-            onChange={(e) => setNewTaskTitle(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); createTask(); } }}
-            placeholder={t('task.new')}
-            rows={3}
-            className="w-full bg-transparent text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm outline-none resize-none overflow-hidden"
-          />
+        <div
+          className="border border-dashed border-[var(--border)] rounded-xl p-4"
+          style={{ background: newTaskTitle.trim() ? 'var(--bg-secondary)' : 'transparent', transition: 'background 0.15s' }}
+        >
+          <div className="flex items-start gap-3">
+            <span className="text-[var(--text-muted)] text-lg leading-none mt-0.5 select-none">+</span>
+            <textarea
+              ref={mobileTextareaRef}
+              value={newTaskTitle}
+              onChange={(e) => setNewTaskTitle(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); createTask(); } }}
+              placeholder={t('task.new')}
+              rows={3}
+              className="flex-1 bg-transparent text-[var(--text-primary)] text-sm outline-none resize-none overflow-hidden new-task-placeholder"
+              style={{ fontFamily: 'var(--font-body)' }}
+            />
+          </div>
           {newTaskTitle.trim() && (
-            <button onClick={createTask} disabled={creating} className="mt-2 text-xs text-[var(--accent-blue)] hover:underline">
+            <button
+              onClick={createTask}
+              disabled={creating}
+              className="mt-3 text-xs font-medium text-[var(--accent-blue)] hover:underline"
+            >
               {creating ? t('task.adding') : t('task.addTask')}
             </button>
           )}
         </div>
 
         {completedTasks.length > 0 && (
-          <div>
+          <div className="mt-2">
             <button
               onClick={() => setShowCompleted(!showCompleted)}
-              className="flex items-center gap-2 py-2 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              className="flex items-center gap-2 py-2.5 w-full text-left group/completed"
             >
-              <span style={{ transform: showCompleted ? 'rotate(90deg)' : 'rotate(0)' }}>&#9654;</span>
-              {t('task.completed')} ({completedTasks.length})
+              <span
+                className="text-[var(--text-muted)] text-[10px] transition-transform duration-200"
+                style={{ transform: showCompleted ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block' }}
+              >
+                ▶
+              </span>
+              <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-[0.1em] font-semibold group-hover/completed:text-[var(--text-secondary)] transition-colors">
+                {t('task.completed')} · {completedTasks.length}
+              </span>
+              <span className="flex-1 h-px bg-[var(--border-subtle)]" />
             </button>
             {showCompleted && (
               <div className="space-y-2">

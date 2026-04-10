@@ -1,49 +1,216 @@
 @import "tailwindcss";
 
+/* ── Google Fonts ───────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+/* ── Design tokens ──────────────────────────────────────────────────────────── */
 :root {
-  --bg-primary: #0e1117;
-  --bg-secondary: #161b22;
-  --border: #30363d;
-  --text-primary: #e6edf3;
-  --text-secondary: #8b949e;
-  --text-muted: #484f58;
-  --accent-blue: #58a6ff;
-  --accent-green: #238636;
-  --accent-green-hover: #2ea043;
+  /* Backgrounds */
+  --bg-primary: #070d18;
+  --bg-secondary: #0d1826;
+  --bg-elevated: #111f31;
+
+  /* Borders */
+  --border: #1c2e42;
+  --border-subtle: #162030;
+
+  /* Text */
+  --text-primary: #e8edf7;
+  --text-secondary: #6d839e;
+  --text-muted: #38506a;
+
+  /* Accents */
+  --accent-blue: #4dabf7;
+  --accent-green: #37c24d;
+  --accent-green-hover: #4dce61;
+  --accent-amber: #f59f00;
+
+  /* Typography */
+  --font-display: 'Syne', sans-serif;
+  --font-body: 'IBM Plex Sans', sans-serif;
+
+  /* Glow */
+  --glow-top: rgba(30, 90, 200, 0.13);
 }
 
 [data-theme="light"] {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f6f8fa;
-  --border: #d1d9e0;
-  --text-primary: #1f2328;
-  --text-secondary: #656d76;
-  --text-muted: #8b949e;
-  --accent-blue: #0969da;
-  --accent-green: #1a7f37;
-  --accent-green-hover: #218740;
+  /* Backgrounds — warm cream, not sterile white */
+  --bg-primary: #f4efe6;
+  --bg-secondary: #ebe4d8;
+  --bg-elevated: #e0d9cc;
+
+  /* Borders */
+  --border: #c6bbad;
+  --border-subtle: #d5ccbf;
+
+  /* Text */
+  --text-primary: #18120a;
+  --text-secondary: #68584a;
+  --text-muted: #9e8e7d;
+
+  /* Accents */
+  --accent-blue: #1862d4;
+  --accent-green: #2a8c3a;
+  --accent-green-hover: #33a646;
+  --accent-amber: #d08000;
+
+  /* Glow */
+  --glow-top: rgba(100, 60, 0, 0.07);
+}
+
+/* ── Base ───────────────────────────────────────────────────────────────────── */
+html {
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.6;
+  position: relative;
 }
 
-/* Scrollbar styling */
+/* ── Background atmosphere ──────────────────────────────────────────────────── */
+
+/* Radial gradient glow from top */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 90% 55% at 50% -5%, var(--glow-top) 0%, transparent 68%),
+    var(--bg-primary);
+}
+
+/* Grain / noise texture overlay */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+}
+
+/* ── Typography ─────────────────────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: var(--bg-primary);
 }
 ::-webkit-scrollbar-thumb {
   background: var(--border);
-  border-radius: 4px;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
 }
 
-/* Transition for theme switch */
-html {
-  transition: background-color 0.2s ease, color 0.2s ease;
+/* ── Animations & Motion ────────────────────────────────────────────────────── */
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes statusPulse {
+  0%   { box-shadow: 0 0 0 0 currentColor; opacity: 1; }
+  50%  { box-shadow: 0 0 0 5px transparent; opacity: 0.7; }
+  100% { box-shadow: 0 0 0 0 transparent; opacity: 1; }
+}
+
+/* Stagger reveal — applied per-element with animationDelay inline */
+.stagger-reveal {
+  opacity: 0;
+  animation: fadeSlideUp 0.38s ease-out forwards;
+}
+
+/* Task detail expand/collapse via CSS grid */
+.task-detail-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s ease-out;
+}
+.task-detail-wrapper.expanded {
+  grid-template-rows: 1fr;
+}
+.task-detail-wrapper > div {
+  overflow: hidden;
+}
+
+/* Status badge pulse */
+.status-pulse {
+  animation: statusPulse 0.45s ease-out;
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .stagger-reveal {
+    animation: none;
+    opacity: 1;
+  }
+  .task-detail-wrapper,
+  .task-detail-wrapper.expanded {
+    transition: none;
+  }
+  .status-pulse {
+    animation: none;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* ── New task placeholder ───────────────────────────────────────────────────── */
+.new-task-placeholder::placeholder {
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: 0;
+}
+
+/* ── Interactive element polish ─────────────────────────────────────────────── */
+select {
+  transition: color 0.12s ease, background-color 0.12s ease;
+}
+select:focus {
+  outline: 1px solid var(--accent-blue);
+  outline-offset: 1px;
+}
+button {
+  transition: opacity 0.12s ease, color 0.12s ease, background-color 0.15s ease;
+}
+
+/* ── Selection ──────────────────────────────────────────────────────────────── */
+::selection {
+  background: rgba(77, 171, 247, 0.22);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] ::selection {
+  background: rgba(24, 98, 212, 0.18);
 }

@@ -29,32 +29,63 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] p-6">
+    <div className="min-h-screen px-5 py-8 md:px-10 md:py-12">
       <div className="max-w-5xl mx-auto">
-        <div className="flex items-center justify-between mb-1">
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">VybePM</h1>
-          <div className="flex items-center gap-2">
-            <LanguageToggle />
-            <ThemeToggle />
+
+        {/* Header */}
+        <header className="mb-10">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1
+                className="text-[52px] md:text-[68px] leading-none text-[var(--text-primary)] tracking-tight"
+                style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}
+              >
+                Vybe
+                <span style={{ color: 'var(--accent-blue)' }}>PM</span>
+              </h1>
+              <p className="text-[var(--text-secondary)] text-sm mt-2">{t('nav.subtitle')}</p>
+            </div>
+
+            <div className="flex items-center gap-2 mt-2 shrink-0">
+              <LanguageToggle />
+              <ThemeToggle />
+            </div>
           </div>
-        </div>
-        <p className="text-sm text-[var(--text-secondary)] mb-6">{t('nav.subtitle')}</p>
+
+          {/* Divider */}
+          <div
+            className="mt-7 h-px"
+            style={{
+              background: 'linear-gradient(90deg, var(--accent-blue) 0%, var(--border) 30%, transparent 100%)',
+              opacity: 0.45,
+            }}
+          />
+        </header>
 
         {/* Video Command Bar */}
         <VideoCommandBar />
 
-        {/* Project Grid */}
-        <h2 className="text-sm font-medium text-[var(--text-secondary)] uppercase tracking-wide mb-3">{t('nav.projects')}</h2>
+        {/* Projects section */}
+        <section>
+          <h2
+            className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.14em] mb-4"
+            style={{ fontFamily: 'var(--font-body)' }}
+          >
+            {t('nav.projects')}
+          </h2>
 
-        {loading ? (
-          <div className="text-[var(--text-secondary)] text-sm">{t('loading.projects')}</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {projects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
-            ))}
-          </div>
-        )}
+          {loading ? (
+            <div className="text-[var(--text-secondary)] text-sm">{t('loading.projects')}</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {projects.map((project, i) => (
+                <div key={project.id} className="stagger-reveal" style={{ animationDelay: `${i * 65}ms` }}>
+                  <ProjectCard project={project} />
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );
