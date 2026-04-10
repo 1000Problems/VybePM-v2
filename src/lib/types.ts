@@ -96,7 +96,7 @@ export const STATUS_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
   pending: ['in_progress'],
   in_progress: ['review', 'done'],
   review: ['in_progress', 'checked_in', 'done'],
-  checked_in: ['deployed'],
+  checked_in: ['deployed', 'done'],
   deployed: ['in_progress', 'done'],
   done: [],
 };
