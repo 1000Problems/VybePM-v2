@@ -42,7 +42,7 @@ export default function LoginPage() {
         onSubmit={handleSubmit}
         className="w-full max-w-sm p-8 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg"
       >
-        <h1 className="text-xl font-semibold text-[var(--text-primary)] mb-6">VybePM</h1>
+        <h1 className="text-xl font-semibold text-[var(--text-primary)] mb-6">Vybe<span style={{ color: 'var(--accent-violet)' }}>PM</span></h1>
         <input
           type="password"
           value={password}

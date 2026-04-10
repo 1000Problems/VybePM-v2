@@ -41,7 +41,7 @@ export default function HomePage() {
                 style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}
               >
                 Vybe
-                <span style={{ color: 'var(--accent-blue)' }}>PM</span>
+                <span style={{ color: 'var(--accent-violet)' }}>PM</span>
               </h1>
               <p className="text-[var(--text-secondary)] text-sm mt-2">{t('nav.subtitle')}</p>
             </div>

@@ -24,6 +24,7 @@
   --accent-green: #37c24d;
   --accent-green-hover: #4dce61;
   --accent-amber: #f59f00;
+  --accent-violet: #c084fc;
 
   /* Typography */
   --font-display: 'Syne', sans-serif;
@@ -53,6 +54,7 @@
   --accent-green: #2a8c3a;
   --accent-green-hover: #33a646;
   --accent-amber: #d08000;
+  --accent-violet: #9333ea;
 
   /* Glow */
   --glow-top: rgba(100, 60, 0, 0.07);
